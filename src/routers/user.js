@@ -1,6 +1,6 @@
 const express=require('express')
 const multer=require('multer')
-//const sharp=require
+const sharp=require('sharp')
 const User=require('../models/user')
 const auth=require('../middleware/auth') //the authorisation is required to be added to the indivdual middlewares except the login and the signup
 const {sendWelcomeEmail, sendCancelationEmail} = require('../emails/account')
@@ -215,7 +215,8 @@ const upload=multer({
 
 //this route will be used to upload or update a new avatar picture in our profile
 router.post('/users/me/avatar',auth,upload.single('avatar'),async(req,res)=>{
-    req.user.avatar=req.file.buffer //avatar is a new field created insode the user model
+    const buffer=await sharp(req.file.buffer).resize({width:250,height:250}).png().toBuffer()
+    req.user.avatar=buffer //avatar is a new field created insode the user model
     await req.user.save()
     res.send()
 },(error,req,res,next)=>{    //this part handles the error that might occur for not uploading anything
@@ -239,7 +240,7 @@ router.get('/users/:id/avatar',async(req,res)=>{
             throw new Error()
         }
 
-        res.set('Content-type','image/jpg')   //setting up the response headerss
+        res.set('Content-type','image/png')   //setting up the response headerss
         res.send(user.avatar)
 
     }catch(e){
